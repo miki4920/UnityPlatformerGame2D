@@ -1,2 +1,2 @@
 # UnityPlatformerGame2D
-A project designed to learn Unity's 2D system.
+A project focused on applying Neural Evolution AI to a variety of games
