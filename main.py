@@ -1,75 +1,89 @@
 import pygame
 from pygame import display, Surface
 from pygame.locals import *
-from pygame.sprite import Sprite
-
 from config import KeyBinds, Config
 
 pygame.init()
-game_display = display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
+game_display = display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT), pygame.RESIZABLE)
 vec = pygame.math.Vector2
-frames_per_second = pygame.time.Clock
-
-
-def key_handler(key):
-    movement_vector = [0, 0]
-    if key == KeyBinds.LEFT:
-        movement_vector[0] -= 1
-    if key == KeyBinds.RIGHT:
-        movement_vector[0] += 1
-    if key == KeyBinds.UP:
-        movement_vector[1] -= 1
-    if key == KeyBinds.DOWN:
-        movement_vector[1] += 1
-    return movement_vector
+frames_per_second = pygame.time.Clock()
 
 
 class GameObject:
-    def __init__(self, name, x, y, width, height):
+    def __init__(self, name, position, dimensions, units):
         self.name = name
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+        self.position = position
+        self.dimensions = dimensions
+        self.surface = None
+        self.rectangle = None
+        self.draw(units)
 
-    def __str__(self):
-        return self.name
+    def __eq__(self, other):
+        return self.name == other.name
 
-    def update(self, x, y):
-        self.x += x
-        self.y += y
+    def draw(self, units, shift=0):
+        self.surface = Surface((self.dimensions.x * units.x, self.dimensions.y * units.y))
+        self.surface.fill((128, 255, 40))
+        self.rectangle = self.surface.get_rect()
+        self.rectangle.topleft = ((self.position.x - shift) * units.x, self.position.y * units.y)
+        return self.surface, self.rectangle
 
 
 class Environment:
     def __init__(self):
         self.objects = {}
+        self.player = GameObject("player", vec(0, Config.HEIGHT-2), vec(1, 1), self.get_units())
+        self.add_object(self.player)
+        self.velocity = vec(0, 0)
+        self.acceleration = vec(0, 0)
 
     def add_object(self, game_object):
         self.objects[str(game_object)] = game_object
 
-    def update_object(self, name, coordinates):
-        self.objects[name].update(*coordinates)
+    def get_object(self, name):
+        return self.objects.get(name)
+
+    def check_object_collision(self):
+        for game_object in self.objects.values():
+            if game_object != self.player:
+                if game_object.rectangle.colliderect(self.player.rectangle):
+                    return game_object.rectangle
+        return None
+
+    def update(self, keys):
+        self.acceleration = vec(0, Config.GRAVITY)
+        if keys[KeyBinds.LEFT]:
+            self.acceleration.x = Config.ACCELERATION
+        if keys[KeyBinds.RIGHT]:
+            self.acceleration.x = -Config.ACCELERATION
+        if keys[KeyBinds.UP]:
+            if self.player.position.y == 9:
+                self.velocity.y = 0
+                self.acceleration.y = Config.JUMPING_POWER
+        self.acceleration.x += self.velocity.x * Config.FRICTION
+        self.velocity += self.acceleration
+        self.player.position += self.velocity + 0.5 * self.acceleration
+
+    @staticmethod
+    def get_units():
+        x = game_display.get_width() / Config.WIDTH
+        y = game_display.get_height() / Config.HEIGHT
+        return vec(x, y)
 
     def render_environment(self):
         game_display.fill((0, 0, 0))
-        x_unit = Config.SCREEN_WIDTH / Config.WIDTH
-        y_unit = Config.SCREEN_HEIGHT / Config.HEIGHT
         for game_object in self.objects.values():
-            surface = Surface((game_object.width * x_unit, game_object.height * y_unit))
-            surface.fill((128, 255, 40))
-            rectangle = surface.get_rect()
-            rectangle.topleft = (game_object.x*x_unit, game_object.y*y_unit)
-            game_display.blit(surface, rectangle)
+            game_display.blit(*game_object.draw(self.get_units(), self.player.position.x))
+            if self.player.position.x - 1 > game_object.position.x:
+                game_object.position.x += Config.WIDTH
         display.update()
 
 
 environment = Environment()
-environment.add_object(GameObject("player", 0, 9, 1, 1))
-
+environment.add_object(GameObject("wall", vec(0, Config.HEIGHT-1), vec(Config.WIDTH, 1), environment.get_units()))
 
 while True:
     environment.render_environment()
-    for event in pygame.event.get():
-        if event.type == KEYDOWN:
-            movement_vector = key_handler(event.key)
-            environment.update_object("player", movement_vector)
+    environment.update(pygame.key.get_pressed())
+    pygame.event.pump()
+    frames_per_second.tick(60)
