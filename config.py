@@ -14,6 +14,6 @@ class Config:
     FPS = 5
 
     ACCELERATION = 2.5
-    JUMPING_POWER = -10
+    JUMPING_POWER = -11
     FRICTION = -0.99
     GRAVITY = 0.5

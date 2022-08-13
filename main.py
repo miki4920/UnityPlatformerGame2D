@@ -78,8 +78,8 @@ class Environment:
         if keys[KeyBinds.RIGHT]:
             self.acceleration.x = Config.ACCELERATION
         if keys[KeyBinds.UP]:
-            if self.velocity.y >= 0:
-                self.velocity.y = -10
+            if self.velocity.y == 0:
+                self.velocity.y = Config.JUMPING_POWER
         self.acceleration.x += self.velocity.x * Config.FRICTION
         self.velocity += self.acceleration
         change = self.velocity + 0.5 * self.acceleration
@@ -98,6 +98,7 @@ environment.add_object(GameObject("wall", vec(0, Config.SCREEN_HEIGHT), vec(50, 
 environment.add_object(GameObject("wall", vec(50, Config.SCREEN_HEIGHT), vec(50, 50)))
 environment.add_object(GameObject("wall", vec(100, Config.SCREEN_HEIGHT), vec(50, 50)))
 environment.add_object(GameObject("wall", vec(100, Config.SCREEN_HEIGHT-50), vec(50, 50)))
+environment.add_object(GameObject("wall", vec(100, Config.SCREEN_HEIGHT-100), vec(50, 50)))
 environment.add_object(GameObject("wall", vec(150, Config.SCREEN_HEIGHT), vec(50, 50)))
 
 while True:
