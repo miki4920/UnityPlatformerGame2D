@@ -30,7 +30,7 @@ class GameObject:
 class Environment:
     def __init__(self):
         self.objects = {}
-        self.player = GameObject("player", vec(0, 0), vec(50, 50))
+        self.player = GameObject("player", vec(0, 400), vec(50, 50))
         self.add_object(self.player)
         self.velocity = vec(0, 0)
         self.acceleration = vec(0, 0)
@@ -49,22 +49,28 @@ class Environment:
                     return game_object.rectangle
         return None
 
-    def account_for_collision(self):
+    def account_for_collision(self, change):
         collision = self.get_object_collision()
         if collision:
-            if self.previous_positions.y > collision.top:
-                self.player.positions.y = collision.top + 1
+            if self.player.positions.y > collision.top:
                 self.velocity.y = 0
-            elif self.previous_positions.y < collision.bottom:
-                self.player.positions.y = collision.bottom - 1
-            self.player.rectangle.bottomleft = self.player.positions
+                self.player.positions.y = collision.top
+            elif self.player.positions.y < collision.bottom:
+                self.velocity.y = 0
+                self.player.positions.y = collision.bottom
+        self.player.positions.y += round(change.y, 0)
+        self.player.rectangle.bottomleft = self.player.positions
         collision = self.get_object_collision()
         if collision:
-            if self.previous_positions.x > collision.left:
-                self.player.positions.x = collision.left - 1
-            elif self.previous_positions.x < collision.right:
-                self.player.positions.x = collision.right + 1
-            self.player.rectangle.bottomleft = self.player.positions
+            if self.player.positions.x < collision.left:
+                self.velocity.x = 0
+                self.player.positions.x = collision.left
+            elif self.player.positions.x > collision.right:
+                self.velocity.x = 0
+                self.player.positions.x = collision.right
+        self.player.positions.x += round(change.x, 0)
+        self.player.rectangle.bottomleft = self.player.positions
+
 
     def update(self, keys):
         self.acceleration = vec(0, Config.GRAVITY)
@@ -73,17 +79,12 @@ class Environment:
         if keys[KeyBinds.RIGHT]:
             self.acceleration.x = Config.ACCELERATION
         if keys[KeyBinds.UP]:
-            self.velocity.y = 0
-            self.acceleration.y = Config.JUMPING_POWER
-
+            if self.velocity.y >= 0:
+                self.velocity.y = -10
         self.acceleration.x += self.velocity.x * Config.FRICTION
         self.velocity += self.acceleration
-
         change = self.velocity + 0.5 * self.acceleration
-        self.player.positions += vec(round(change.x, 0), round(change.y, 0))
-        self.player.rectangle.bottomleft = self.player.positions
-        self.account_for_collision()
-        self.previous_positions = vec(*self.player.positions)
+        self.account_for_collision(change)
 
     def render_environment(self):
         game_display.fill((0, 0, 0))
@@ -94,6 +95,7 @@ class Environment:
 
 environment = Environment()
 environment.add_object(GameObject("wall", vec(0, Config.SCREEN_HEIGHT), vec(400, 50)))
+environment.add_object(GameObject("wall", vec(0, Config.SCREEN_HEIGHT-50), vec(50, 50)))
 
 while True:
     environment.render_environment()
