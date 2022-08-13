@@ -9,13 +9,11 @@ class KeyBinds:
 
 
 class Config:
-    WIDTH = 10
-    HEIGHT = 10
     SCREEN_WIDTH = 500
     SCREEN_HEIGHT = 500
     FPS = 5
 
-    ACCELERATION = 4
+    ACCELERATION = 0.1
     JUMPING_POWER = -10
-    FRICTION = -0.99
+    FRICTION = 0
     GRAVITY = 0.5
