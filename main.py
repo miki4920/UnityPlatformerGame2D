@@ -18,7 +18,6 @@ class GameObject:
         self.previous_rectangle.bottomleft = positions
         self.rectangle = self.surface.get_rect()
         self.rectangle.bottomleft = positions
-        self.draw()
 
     def __eq__(self, other):
         return self.name == other.name
@@ -59,7 +58,6 @@ class Environment:
         while len(collisions) != 0:
             collision = collisions[0]
             self.velocity.y = 0
-            self.velocity.x = 0
             if self.player.previous_rectangle.bottom <= collision.top:
                 self.player.rectangle.bottom = collision.top
             if self.player.previous_rectangle.top >= collision.bottom:
@@ -80,10 +78,12 @@ class Environment:
         if keys[KeyBinds.RIGHT]:
             self.acceleration.x = Config.ACCELERATION
         if keys[KeyBinds.UP]:
-            self.velocity.y = -10
+            if self.velocity.y >= 0:
+                self.velocity.y = -10
         self.acceleration.x += self.velocity.x * Config.FRICTION
         self.velocity += self.acceleration
-        self.player.rectangle.bottomleft += self.velocity + 0.5 * self.acceleration
+        change = self.velocity + 0.5 * self.acceleration
+        self.player.rectangle.bottomleft += vec(round(change.x, 0), round(change.y, 0))
         self.account_for_collision()
 
     def render_environment(self):

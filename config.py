@@ -13,7 +13,7 @@ class Config:
     SCREEN_HEIGHT = 500
     FPS = 5
 
-    ACCELERATION = 0.1
+    ACCELERATION = 2.5
     JUMPING_POWER = -10
-    FRICTION = 0
+    FRICTION = -0.99
     GRAVITY = 0.5
