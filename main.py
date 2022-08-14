@@ -33,6 +33,7 @@ class Environment:
         self.add_object(self.player)
         self.velocity = vec(0, 0)
         self.acceleration = vec(0, 0)
+        self.colliding = True
 
     def add_object(self, game_object):
         self.objects[str(game_object)] = game_object
@@ -55,11 +56,14 @@ class Environment:
 
     def account_for_collision(self):
         collisions = self.get_object_collision()
+        self.colliding = False
         while len(collisions) != 0:
             collision = collisions[0]
-            self.velocity.y = 0
             if self.player.previous_rectangle.bottom <= collision.top:
                 self.player.rectangle.bottom = collision.top
+                self.colliding = True
+                if self.velocity.y >= 0:
+                    self.velocity.y = 0
             if self.player.previous_rectangle.top >= collision.bottom:
                 self.player.rectangle.top = collision.bottom
             if collision.colliderect(self.player.rectangle):
@@ -78,7 +82,7 @@ class Environment:
         if keys[KeyBinds.RIGHT]:
             self.acceleration.x = Config.ACCELERATION
         if keys[KeyBinds.UP]:
-            if self.velocity.y == 0:
+            if self.colliding:
                 self.velocity.y = Config.JUMPING_POWER
         self.acceleration.x += self.velocity.x * Config.FRICTION
         self.velocity += self.acceleration
