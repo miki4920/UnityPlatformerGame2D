@@ -62,21 +62,20 @@ class Environment:
             if self.player.previous_rectangle.bottom <= collision.top:
                 self.player.rectangle.bottom = collision.top
                 self.colliding = True
-                if self.velocity.y >= 0:
-                    self.velocity.y = 0
             if self.player.previous_rectangle.top >= collision.bottom:
                 self.player.rectangle.top = collision.bottom
             if collision.colliderect(self.player.rectangle):
+                self.velocity.x = 0
                 if self.player.previous_rectangle.right <= collision.left:
                     self.player.rectangle.right = collision.left
                 if self.player.previous_rectangle.left >= collision.right:
                     self.player.rectangle.left = collision.right
-
             collisions = self.get_object_collision()
         self.player.previous_rectangle = self.player.rectangle.copy()
 
     def update(self, keys):
-        self.acceleration = vec(0, Config.GRAVITY)
+        self.acceleration = vec(0, 0)
+        self.acceleration.y += 0 if self.colliding else Config.GRAVITY
         if keys[KeyBinds.LEFT]:
             self.acceleration.x = -Config.ACCELERATION
         if keys[KeyBinds.RIGHT]:
