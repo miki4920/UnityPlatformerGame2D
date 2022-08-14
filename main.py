@@ -60,6 +60,7 @@ class Environment:
         while len(collisions) != 0:
             collision = collisions[0]
             if self.player.previous_rectangle.bottom <= collision.top:
+                self.velocity.y = 0
                 self.player.rectangle.bottom = collision.top
                 self.colliding = True
             if self.player.previous_rectangle.top >= collision.bottom:
