@@ -1,6 +1,7 @@
 import pygame
+
 from pygame import display, Surface
-from pygame.locals import *
+from random import randint
 from config import KeyBinds, Config
 
 pygame.init()
@@ -10,75 +11,68 @@ frames_per_second = pygame.time.Clock()
 
 
 class GameObject:
-    def __init__(self, name, positions, dimensions):
-        self.name = name
-        self.surface = Surface(dimensions)
-        self.surface.fill((128, 255, 40))
+    def __init__(self, positions, size, colour):
+        self.surface = Surface(vec(size))
+        self.surface.fill(colour)
         self.previous_rectangle = self.surface.get_rect()
         self.previous_rectangle.bottomleft = positions
         self.rectangle = self.surface.get_rect()
         self.rectangle.bottomleft = positions
 
     def __eq__(self, other):
-        return self.name == other.name
+        return self.rectangle.bottomleft == other.rectangle.bottomleft
 
-    def draw(self):
-        return self.surface, self.rectangle
+    def draw(self, shift=0):
+        rectangle = self.rectangle.copy()
+        rectangle.left -= shift
+        return self.surface, rectangle
 
 
 class Environment:
     def __init__(self):
         self.objects = {}
-        self.player = GameObject("player", vec(0, 400), vec(50, 50))
-        self.add_object(self.player)
+        self.player = GameObject(vec(0, Config.LEVEL_HEIGHT), Config.PLAYER_SIZE, Config.PLAYER_COLOUR)
         self.velocity = vec(0, 0)
         self.acceleration = vec(0, 0)
         self.colliding = True
+        self.score = 0
 
     def add_object(self, game_object):
-        self.objects[str(game_object)] = game_object
+        self.objects[game_object.rectangle.bottomleft] = game_object
 
-    def get_object(self, name):
-        return self.objects.get(name)
+    def get_object(self, coordinates):
+        return self.objects.get(coordinates)
 
     def get_center_distance(self, rectangle):
         return vec(*self.player.rectangle.center).distance_squared_to(vec(*rectangle.center))
 
     def get_object_collision(self):
-        collisions = []
         for game_object in self.objects.values():
-            if game_object != self.player:
-                if game_object.rectangle.colliderect(self.player.rectangle):
-                    collisions.append(game_object.rectangle)
-        if collisions:
-            collisions = sorted(collisions, key=lambda collision: self.get_center_distance(collision))
-        return collisions
+            if game_object.rectangle.colliderect(self.player.rectangle):
+                return game_object.rectangle
+        return None
 
     def account_for_collision(self):
-        collisions = self.get_object_collision()
         self.colliding = False
-        while len(collisions) != 0:
-            collision = collisions[0]
+        while collision := self.get_object_collision():
             if self.player.previous_rectangle.bottom <= collision.top:
                 self.velocity.y = 0
                 self.player.rectangle.bottom = collision.top
                 self.colliding = True
             if self.player.previous_rectangle.top >= collision.bottom:
+                self.velocity.y = 0
                 self.player.rectangle.top = collision.bottom
-            if collision.colliderect(self.player.rectangle):
+            if self.player.previous_rectangle.right <= collision.left:
                 self.velocity.x = 0
-                if self.player.previous_rectangle.right <= collision.left:
-                    self.player.rectangle.right = collision.left
-                if self.player.previous_rectangle.left >= collision.right:
-                    self.player.rectangle.left = collision.right
-            collisions = self.get_object_collision()
+                self.player.rectangle.right = collision.left
+            if self.player.previous_rectangle.left >= collision.right:
+                self.velocity.x = 0
+                self.player.rectangle.left = collision.right
         self.player.previous_rectangle = self.player.rectangle.copy()
 
     def update(self, keys):
         self.acceleration = vec(0, 0)
         self.acceleration.y += 0 if self.colliding else Config.GRAVITY
-        if keys[KeyBinds.LEFT]:
-            self.acceleration.x = -Config.ACCELERATION
         if keys[KeyBinds.RIGHT]:
             self.acceleration.x = Config.ACCELERATION
         if keys[KeyBinds.UP]:
@@ -89,23 +83,39 @@ class Environment:
         change = self.velocity + 0.5 * self.acceleration
         self.player.rectangle.bottomleft += vec(round(change.x, 0), round(change.y, 0))
         self.account_for_collision()
+        self.score = self.player.rectangle.left if self.player.rectangle.left > self.score else self.score
 
     def render_environment(self):
+        to_delete = []
+
         game_display.fill((0, 0, 0))
+        game_display.blit(*self.player.draw(self.player.rectangle.left))
         for game_object in self.objects.values():
-            game_display.blit(*game_object.draw())
+            if game_object.rectangle.right < self.player.rectangle.left:
+                to_delete.append(game_object.rectangle.bottomleft)
+            game_display.blit(*game_object.draw(self.player.rectangle.left))
+        for positions in to_delete:
+            del self.objects[positions]
         display.update()
+
+    def create_ground(self):
+        positions = (Config.SCREEN_WIDTH + Config.WALL_SIZE[0] * (self.player.rectangle.left // Config.WALL_SIZE[0]), Config.SCREEN_HEIGHT)
+        if not self.get_object(positions):
+            self.add_object(GameObject(positions, Config.WALL_SIZE, (100, 100, 100)))
+            counter = Config.SCREEN_HEIGHT
+            while randint(0, 1):
+                counter -= Config.WALL_SIZE[1]
+                if counter <= Config.WALL_SIZE[1] * 3:
+                    break
+                self.add_object(GameObject((positions[0], counter), Config.WALL_SIZE, (100, 100, 100)))
 
 
 environment = Environment()
-environment.add_object(GameObject("wall", vec(0, Config.SCREEN_HEIGHT), vec(50, 50)))
-environment.add_object(GameObject("wall", vec(50, Config.SCREEN_HEIGHT), vec(50, 50)))
-environment.add_object(GameObject("wall", vec(100, Config.SCREEN_HEIGHT), vec(50, 50)))
-environment.add_object(GameObject("wall", vec(100, Config.SCREEN_HEIGHT-50), vec(50, 50)))
-environment.add_object(GameObject("wall", vec(100, Config.SCREEN_HEIGHT-100), vec(50, 50)))
-environment.add_object(GameObject("wall", vec(150, Config.SCREEN_HEIGHT), vec(50, 50)))
+for i in range(0, Config.SCREEN_WIDTH, 50):
+    environment.add_object(GameObject(vec(i, Config.SCREEN_HEIGHT), Config.WALL_SIZE, (100, 100, 100)))
 
 while True:
+    environment.create_ground()
     environment.render_environment()
     environment.update(pygame.key.get_pressed())
     pygame.event.pump()
