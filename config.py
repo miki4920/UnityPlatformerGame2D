@@ -16,6 +16,7 @@ class Config:
     PLAYER_COLOUR = (255, 128, 128)
 
     WALL_SIZE = (60, 60)
+    WALL_COLOUR = (100, 100, 100)
     FPS = 60
 
     LEVEL_HEIGHT = SCREEN_HEIGHT - WALL_SIZE[1]

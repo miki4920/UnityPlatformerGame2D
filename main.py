@@ -11,7 +11,7 @@ frames_per_second = pygame.time.Clock()
 
 
 class GameObject:
-    def __init__(self, positions, size, colour):
+    def __init__(self, positions, size=Config.WALL_SIZE, colour=Config.WALL_COLOUR):
         self.surface = Surface(vec(size))
         self.surface.fill(colour)
         self.previous_rectangle = self.surface.get_rect()
@@ -37,7 +37,7 @@ class Environment:
         self.colliding = True
         self.score = 0
         for i in range(0, Config.SCREEN_WIDTH, Config.WALL_SIZE[0]):
-            environment.add_object(GameObject(vec(i, Config.SCREEN_HEIGHT), Config.WALL_SIZE, (100, 100, 100)))
+            self.add_object(GameObject(vec(i, Config.SCREEN_HEIGHT)))
 
     def add_object(self, game_object):
         self.objects[game_object.rectangle.bottomleft] = game_object
@@ -89,7 +89,6 @@ class Environment:
 
     def render_environment(self):
         to_delete = []
-
         game_display.fill((0, 0, 0))
         game_display.blit(*self.player.draw(self.player.rectangle.left))
         for game_object in self.objects.values():
@@ -103,13 +102,13 @@ class Environment:
     def create_ground(self):
         positions = (Config.SCREEN_WIDTH + Config.WALL_SIZE[0] * (self.player.rectangle.left // Config.WALL_SIZE[0]), Config.SCREEN_HEIGHT)
         if not self.get_object(positions):
-            self.add_object(GameObject(positions, Config.WALL_SIZE, (100, 100, 100)))
+            self.add_object(GameObject(positions))
             counter = Config.SCREEN_HEIGHT
             while randint(0, 1):
                 counter -= Config.WALL_SIZE[1]
                 if counter <= Config.WALL_SIZE[1] * 3:
                     break
-                self.add_object(GameObject((positions[0], counter), Config.WALL_SIZE, (100, 100, 100)))
+                self.add_object(GameObject((positions[0], counter)))
 
 
 environment = Environment()
