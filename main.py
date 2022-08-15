@@ -36,6 +36,8 @@ class Environment:
         self.acceleration = vec(0, 0)
         self.colliding = True
         self.score = 0
+        for i in range(0, Config.SCREEN_WIDTH, Config.WALL_SIZE[0]):
+            environment.add_object(GameObject(vec(i, Config.SCREEN_HEIGHT), Config.WALL_SIZE, (100, 100, 100)))
 
     def add_object(self, game_object):
         self.objects[game_object.rectangle.bottomleft] = game_object
@@ -111,8 +113,7 @@ class Environment:
 
 
 environment = Environment()
-for i in range(0, Config.SCREEN_WIDTH, 50):
-    environment.add_object(GameObject(vec(i, Config.SCREEN_HEIGHT), Config.WALL_SIZE, (100, 100, 100)))
+
 
 while True:
     environment.create_ground()
