@@ -72,14 +72,20 @@ class Environment:
                 self.player.rectangle.left = collision.right
         self.player.previous_rectangle = self.player.rectangle.copy()
 
+    def get_keys(self):
+        keys = pygame.key.get_pressed()
+        self.update((keys[KeyBinds.RIGHT], keys[KeyBinds.UP], keys[KeyBinds.LEFT]))
+
     def update(self, keys):
         self.acceleration = vec(0, 0)
         self.acceleration.y += 0 if self.colliding else Config.GRAVITY
-        if keys[KeyBinds.RIGHT]:
+        if keys[0]:
             self.acceleration.x = Config.ACCELERATION
-        if keys[KeyBinds.UP]:
+        if keys[1]:
             if self.colliding:
                 self.velocity.y = Config.JUMPING_POWER
+        if keys[2]:
+            self.acceleration.x = -Config.ACCELERATION
         self.acceleration.x += self.velocity.x * Config.FRICTION
         self.velocity += self.acceleration
         change = self.velocity + 0.5 * self.acceleration
@@ -111,12 +117,11 @@ class Environment:
                 self.add_object(GameObject((positions[0], counter)))
 
 
-environment = Environment()
-
-
-while True:
-    environment.create_ground()
-    environment.render_environment()
-    environment.update(pygame.key.get_pressed())
-    pygame.event.pump()
-    frames_per_second.tick(60)
+if __name__ == "__main__":
+    environment = Environment()
+    while True:
+        environment.create_ground()
+        environment.render_environment()
+        environment.get_keys()
+        pygame.event.pump()
+        frames_per_second.tick(60)
