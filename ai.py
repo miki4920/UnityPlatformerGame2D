@@ -1,29 +1,45 @@
 import neat
 import pygame
 
-from game import Environment, frames_per_second, game_display
+from config import Config
+from game import Environment, Player, frames_per_second, game_display
 
 imgarray = []
 xpos_end = 0
 
 
 def evaluate_genomes(genomes, config):
-    global environments, genomes_list, nets
-    environments = []
+    global environment, genomes_list, nets
+    environment = Environment()
     genomes_list = []
     nets = []
     for genome_id, genome in genomes:
-        environments.append(Environment())
+        environment.players.append(Player())
         genomes_list.append(genome)
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         nets.append(net)
         genome.fitness = 0
-
-    environment.create_ground()
-    environment.render_environment()
-    environment.get_keys()
-    pygame.event.pump()
-    frames_per_second.tick(60)
+    while True:
+        if len(environment.players) == 0:
+            break
+        environment.create_ground()
+        environment.render_environment()
+        shift = environment.get_furthest_player()
+        to_delete = []
+        for i, player in enumerate(environment.players):
+            obstacle_x, obstacle_y = environment.deadly_object.rectangle.topleft
+            output = nets[i].activate((player.rectangle.bottom, obstacle_x-player.rectangle.right, obstacle_y))
+            environment.update(player, output)
+            if player.dead or shift > player.rectangle.right:
+                to_delete.append(i)
+            genomes_list[i].fitness = player.rectangle.left
+        to_delete = to_delete[::-1]
+        for key in to_delete:
+            del environment.players[key]
+            del nets[key]
+            del genomes_list[key]
+        frames_per_second.tick(60)
+        pygame.event.pump()
 
 
 def run(config_path):
@@ -39,7 +55,4 @@ def run(config_path):
 
 
 if __name__ == "__main__":
-    config_path = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         'config-feedforward')
-    run(config_path)
+    run('config-feedforward')
