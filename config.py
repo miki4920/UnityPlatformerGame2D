@@ -19,8 +19,6 @@ class Config:
     WALL_COLOUR = (100, 100, 100)
     FPS = 60
 
-    LEVEL_HEIGHT = SCREEN_HEIGHT - WALL_SIZE[1]
-
     ACCELERATION = 3
     JUMPING_POWER = -14
     FRICTION = -0.5
