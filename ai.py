@@ -1,8 +1,7 @@
 import neat
 import pygame
 
-from config import Config
-from game import Environment, Player, frames_per_second, game_display
+from game import Environment, Player, frames_per_second
 
 imgarray = []
 xpos_end = 0
