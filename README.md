@@ -1,2 +1,2 @@
-# UnityPlatformerGame2D
-A project focused on applying Neural Evolution AI to a variety of games
+# python-neural-evolution-jumping-ai
+A project focused on using NEAT AI to create a platform jumping.
